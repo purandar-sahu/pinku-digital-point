@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register | Pinku Digital Point</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;width:100%;max-width:400px;padding:26px 22px;border-radius:14px;box-shadow:0 6px 24px #0001}
+h1{font-size:22px;color:#102b50;margin-bottom:4px}
+p.sub{font-size:13px;color:#738198;margin-bottom:18px}
+label{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
+input{width:100%;padding:12px;border:1px solid #d5dde8;border-radius:8px;font-size:15px}
+button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:#16a36a;color:#fff;font-size:16px;font-weight:bold}
+button:disabled{opacity:.6}
+#msg{margin-top:14px;font-size:14px;text-align:center}
+.err{color:#c62828}.ok{color:#16a36a}
+.links{text-align:center;margin-top:16px;font-size:13px}
+.links a{color:#1769d2}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>Create Account</h1>
+<p class="sub">Register to submit and track your service requests.</p>
+<label for="name">Full Name</label>
+<input id="name" type="text" autocomplete="name">
+<label for="mobile">Mobile Number</label>
+<input id="mobile" type="tel" maxlength="10" autocomplete="tel">
+<label for="email">Email</label>
+<input id="email" type="email" autocomplete="email">
+<label for="password">Password (min 6 characters)</label>
+<input id="password" type="password" autocomplete="new-password">
+<button id="btn">Register</button>
+<div id="msg"></div>
+<div class="links"><a href="index.html">← Back to Home</a></div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase-init.js";
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const msg = document.getElementById("msg");
+const btn = document.getElementById("btn");
+function show(text, ok){ msg.textContent = text; msg.className = ok ? "ok" : "err"; }
+
+btn.addEventListener("click", async () => {
+  const name = document.getElementById("name").value.trim();
+  const mobile = document.getElementById("mobile").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (name.length < 2) return show("Please enter your full name.");
+  if (!/^[6-9][0-9]{9}$/.test(mobile)) return show("Please enter a valid 10 digit mobile number.");
+  if (!email) return show("Please enter your email.");
+  if (password.length < 6) return show("Password must be at least 6 characters.");
+
+  btn.disabled = true;
+  show("Creating your account...", true);
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      name: name,
+      mobile: mobile,
+      email: email,
+      createdAt: serverTimestamp()
+    });
+    show("Registration successful!", true);
+  } catch (e) {
+    let t = "Something went wrong. Please try again.";
+    if (e.code === "auth/email-already-in-use") t = "This email is already registered.";
+    else if (e.code === "auth/invalid-email") t = "Please enter a valid email.";
+    else if (e.code === "auth/weak-password") t = "Password is too weak.";
+    show(t);
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
