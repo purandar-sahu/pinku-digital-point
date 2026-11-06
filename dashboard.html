@@ -22,6 +22,15 @@ main{max-width:700px;margin:0 auto;padding:22px 5%}
 #content{display:none}
 .home{text-align:center;margin-top:10px;font-size:13px}
 .home a{color:#1769d2}
+.newbtn{display:block;text-align:center;background:#16a36a;color:#fff;padding:13px;border-radius:9px;font-weight:bold;font-size:15px;text-decoration:none}
+.app{border:1px solid #e6edf5;border-radius:10px;padding:14px;margin-bottom:10px}
+.app .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.app .sname{font-weight:bold;color:#102b50;font-size:15px}
+.badge{font-size:12px;font-weight:bold;padding:4px 10px;border-radius:20px;background:#e7f0fb;color:#1769d2;white-space:nowrap}
+.badge.s-Completed{background:#e6f6ee;color:#16a36a}
+.badge.s-Rejected{background:#fdeaea;color:#c62828}
+.badge.s-DocumentRequired{background:#fff4e0;color:#c77700}
+.app .meta{font-size:13px;color:#738198;line-height:1.7}
 </style>
 </head>
 <body>
@@ -38,9 +47,15 @@ main{max-width:700px;margin:0 auto;padding:22px 5%}
 <div class="row"><span>Mobile</span><span id="pmobile"></span></div>
 <div class="row"><span>Email</span><span id="pemail"></span></div>
 </div>
+
+<div class="card">
+<h3>Apply for a Service</h3>
+<a class="newbtn" href="request.html">New PAN Card · ₹249</a>
+</div>
+
 <div class="card">
 <h3>My Applications</h3>
-<p class="soon">No applications yet. Service requests are coming soon.</p>
+<div id="apps"><p class="soon">Loading applications...</p></div>
 </div>
 <div class="home"><a href="index.html">← Back to Home</a></div>
 </div>
@@ -49,7 +64,61 @@ main{max-width:700px;margin:0 auto;padding:22px 5%}
 <script type="module">
 import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+function addLine(parent, text){
+  const d = document.createElement("div");
+  d.textContent = text;
+  parent.appendChild(d);
+}
+
+async function loadApps(uid){
+  const box = document.getElementById("apps");
+  box.innerHTML = "";
+  try {
+    const snap = await getDocs(query(collection(db, "applications"), where("userId", "==", uid)));
+    if (snap.empty) {
+      const p = document.createElement("p");
+      p.className = "soon";
+      p.textContent = "No applications yet.";
+      box.appendChild(p);
+      return;
+    }
+    const list = [];
+    snap.forEach(s => list.push({ id: s.id, ...s.data() }));
+    list.sort((a, b) => (b.createdAt ? b.createdAt.seconds : 0) - (a.createdAt ? a.createdAt.seconds : 0));
+    list.forEach(a => {
+      const card = document.createElement("div");
+      card.className = "app";
+      const top = document.createElement("div");
+      top.className = "top";
+      const sn = document.createElement("span");
+      sn.className = "sname";
+      sn.textContent = a.serviceName || "Service";
+      const st = document.createElement("span");
+      const status = a.status || "Submitted";
+      st.className = "badge s-" + status.replace(/\s/g, "");
+      st.textContent = status;
+      top.appendChild(sn);
+      top.appendChild(st);
+      card.appendChild(top);
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      addLine(meta, "Applicant: " + (a.customerName || "-"));
+      addLine(meta, "Charge: ₹" + (a.charge != null ? a.charge : "-"));
+      if (a.createdAt) addLine(meta, "Date: " + a.createdAt.toDate().toLocaleDateString("en-IN"));
+      addLine(meta, "Application ID: " + a.id.slice(0, 8).toUpperCase());
+      card.appendChild(meta);
+      box.appendChild(card);
+    });
+  } catch (e) {
+    console.error(e);
+    const p = document.createElement("p");
+    p.className = "soon";
+    p.textContent = "Could not load applications.";
+    box.appendChild(p);
+  }
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "login.html"; return; }
@@ -71,6 +140,7 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById("pemail").textContent = email || "-";
   document.getElementById("loading").style.display = "none";
   document.getElementById("content").style.display = "block";
+  loadApps(user.uid);
 });
 
 document.getElementById("logout").addEventListener("click", async () => {
