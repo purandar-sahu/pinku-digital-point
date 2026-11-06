@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Request | Pinku Digital Point</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:100vh;padding:20px}
+.box{background:#fff;max-width:440px;margin:0 auto;padding:24px 20px;border-radius:14px;box-shadow:0 6px 24px #0001}
+h1{font-size:21px;color:#102b50}
+.price{display:inline-block;background:#e6f6ee;color:#16a36a;font-weight:bold;padding:4px 12px;border-radius:20px;margin:8px 0;font-size:14px}
+.docs{background:#f5f8fc;border-radius:8px;padding:12px 14px;margin:10px 0 4px;font-size:13px}
+.docs b{display:block;margin-bottom:4px;color:#102b50}
+.docs li{margin-left:18px}
+label{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
+input{width:100%;padding:12px;border:1px solid #d5dde8;border-radius:8px;font-size:15px}
+button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:#16a36a;color:#fff;font-size:16px;font-weight:bold}
+button:disabled{opacity:.6}
+#msg{margin-top:14px;font-size:14px;text-align:center}
+.err{color:#c62828}.ok{color:#16a36a}
+.note{font-size:12px;color:#738198;margin-top:10px}
+.links{text-align:center;margin-top:16px;font-size:13px}
+.links a{color:#1769d2}
+#loading{text-align:center;padding:30px;color:#738198}
+#content{display:none}
+</style>
+</head>
+<body>
+<div class="box">
+<div id="loading">Loading...</div>
+<div id="content">
+<h1 id="sname"></h1>
+<div class="price">Service Charge: ₹<span id="scharge"></span></div>
+<div class="docs"><b>Documents required:</b><ul id="sdocs"></ul></div>
+
+<label for="cname">Customer Name</label>
+<input id="cname" type="text">
+<label for="fname">Father Name</label>
+<input id="fname" type="text">
+<label for="mobile">Mobile Number</label>
+<input id="mobile" type="tel" maxlength="10">
+<label for="mobile2">Second Mobile Number (optional)</label>
+<input id="mobile2" type="tel" maxlength="10">
+<label for="email">Email (optional)</label>
+<input id="email" type="email">
+<p class="note">Document upload will be added soon. Our team will contact you for the documents.</p>
+<button id="btn">Submit Request</button>
+<div id="msg"></div>
+<div class="links"><a href="dashboard.html">← Back to Dashboard</a></div>
+</div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase-init.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { doc, getDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const SERVICE_ID = "new-pan";
+const msg = document.getElementById("msg");
+const btn = document.getElementById("btn");
+function show(text, ok){ msg.textContent = text; msg.className = ok ? "ok" : "err"; }
+
+let service = null;
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "login.html"; return; }
+  currentUser = user;
+  try {
+    const snap = await getDoc(doc(db, "services", SERVICE_ID));
+    if (!snap.exists() || snap.data().active !== true) {
+      document.getElementById("loading").textContent = "This service is not available right now.";
+      return;
+    }
+    service = snap.data();
+    document.getElementById("sname").textContent = service.name;
+    document.getElementById("scharge").textContent = service.charge;
+    const ul = document.getElementById("sdocs");
+    (service.documents || []).forEach(d => {
+      const li = document.createElement("li");
+      li.textContent = d;
+      ul.appendChild(li);
+    });
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("content").style.display = "block";
+  } catch (e) {
+    document.getElementById("loading").textContent = "Could not load service. Please try again.";
+  }
+});
+
+btn.addEventListener("click", async () => {
+  const customerName = document.getElementById("cname").value.trim();
+  const fatherName = document.getElementById("fname").value.trim();
+  const mobile = document.getElementById("mobile").value.trim();
+  const mobile2 = document.getElementById("mobile2").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const mobileOk = /^[6-9][0-9]{9}$/;
+
+  if (customerName.length < 2) return show("Please enter customer name.");
+  if (fatherName.length < 2) return show("Please enter father name.");
+  if (!mobileOk.test(mobile)) return show("Please enter a valid 10 digit mobile number.");
+  if (mobile2 && !mobileOk.test(mobile2)) return show("Second mobile number is not valid.");
+
+  btn.disabled = true;
+  show("Submitting...", true);
+  try {
+    await addDoc(collection(db, "applications"), {
+      userId: currentUser.uid,
+      serviceId: SERVICE_ID,
+      serviceName: service.name,
+      charge: service.charge,
+      customerName: customerName,
+      fatherName: fatherName,
+      mobile: mobile,
+      mobile2: mobile2,
+      email: email,
+      status: "Submitted",
+      createdAt: serverTimestamp()
+    });
+    show("Request submitted successfully!", true);
+    setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
+  } catch (e) {
+    console.error(e);
+    show("Could not submit. Please try again.");
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
