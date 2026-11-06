@@ -1,1 +1,204 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#102b50">
+<title>Pinku Digital Point | Digital Services</title>
+<meta name="description" content="Pinku Digital Point - Your Digital Service Partner. Explore convenient online digital services.">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#102b50;--blue:#1769d2;--green:#16a36a;--bg:#f5f8fc;--text:#18263b}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{text-decoration:none;color:inherit}
+header{background:white;padding:14px 6%;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px #0000000b;position:sticky;top:0;z-index:10}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:43px;height:43px;border-radius:12px;background:linear-gradient(135deg,#1475df,#15b77c);display:grid;place-items:center;color:white;font-size:25px;font-weight:bold}
+.brand h2{font-size:17px;color:var(--navy);line-height:1.2}
+.brand small{font-size:11px;color:#738198}
+nav{display:flex;gap:22px;align-items:center;font-size:14px;font-weight:600}
+nav a:hover{color:var(--blue)}
+.menu{display:none;background:white;border:0;font-size:25px;color:var(--navy)}
+.hero{background:linear-gradient(120deg,#102b50,#17569b);color:white;padding:75px 7%;text-align:center}
+.hero .tag{display:inline-block;background:#ffffff20;border:1px solid #ffffff35;border-radius:30px;padding:6px 15px;font-size:12px;margin-bottom:18px}
+.hero h1{font-size:clamp(30px,5vw,48px);line-height:1.2;max-width:750px;margin:0 auto 17px}
+.hero p{color:#dce9fa;max-width:600px;margin:auto;font-size:16px}
+.actions{display:flex;justify-content:center;gap:12px;margin-top:27px;flex-wrap:wrap}
+.btn{padding:12px 22px;border-radius:8px;font-weight:bold;display:inline-block;border:0;cursor:pointer}
+.primary{background:#18b77b;color:white}
+.secondary{background:white;color:var(--navy)}
+section{padding:55px 6%}
+.heading{text-align:center;margin-bottom:28px}
+.heading h2{font-size:27px;color:var(--navy)}
+.heading p{color:#758197;font-size:14px;margin-top:5px}
+.search{max-width:550px;margin:0 auto 28px;display:flex;background:white;border:1px solid #e1e7ef;border-radius:10px;padding:5px}
+.search input{width:100%;border:0;outline:0;padding:12px;font-size:15px;background:transparent}
+.search button{background:var(--blue);color:white;border:0;border-radius:7px;padding:0 17px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:white;border:1px solid #e9eef5;border-radius:13px;padding:22px 16px;text-align:center;transition:.2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 10px 25px #16375b12}
+.card .symbol{font-size:30px;margin-bottom:8px}
+.card h3{font-size:15px;color:var(--navy)}
+.card p{font-size:12px;color:#78869a;margin-top:5px}
+.more{text-align:center;margin-top:25px;color:var(--blue);font-weight:bold}
+.info{background:white}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{background:var(--bg);padding:23px;border-radius:12px;text-align:center}
+.step strong{display:block;font-size:18px;color:var(--blue);margin-bottom:8px}
+.step p{font-size:13px;color:#718096}
+.contact{text-align:center;background:#eaf2fc}
+.contact p{color:#65758c;margin:8px}
+footer{background:#102b50;color:white;text-align:center;padding:25px 15px;font-size:13px}
+footer p{color:#c8d7e9;margin-top:5px}
+.whatsapp{position:fixed;bottom:20px;right:18px;background:#20bd68;color:white;width:57px;height:57px;border-radius:50%;display:grid;place-items:center;font-size:27px;box-shadow:0 5px 18px #0003;z-index:20}
+.empty{display:none;text-align:center;color:#758197;padding:20px}
+@media(max-width:750px){
+nav{display:none;position:absolute;top:70px;left:0;right:0;background:white;padding:20px;flex-direction:column;box-shadow:0 8px 15px #0001}
+nav.show{display:flex}
+.menu{display:block}
+.grid{grid-template-columns:repeat(2,1fr);gap:11px}
+.hero{padding:60px 6%}
+section{padding:42px 5%}
+.steps{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<header>
+ <a class="brand" href="#">
+  <div class="logo">P</div>
+  <div>
+   <h2>PINKU DIGITAL POINT</h2>
+   <small>Your Digital Service Partner</small>
+  </div>
+ </a>
+ <button class="menu" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+ <nav id="navigation">
+  <a href="#">Home</a>
+  <a href="#services">Services</a>
+  <a href="#about">About Us</a>
+  <a href="#contact">Contact</a>
+ </nav>
+</header>
+
+<main>
+<section class="hero">
+ <span class="tag">WELCOME TO PINKU DIGITAL POINT</span>
+ <h1>Your Digital Services, All in One Place.</h1>
+ <p>Explore convenient digital services with helpful support from our team.</p>
+ <div class="actions">
+  <a class="btn primary" href="#services">Explore Services →</a>
+  <a class="btn secondary" href="#contact">Contact Us</a>
+ </div>
+</section>
+
+<section id="services">
+ <div class="heading">
+  <h2>Explore Our Services</h2>
+  <p>Find the service you are looking for.</p>
+ </div>
+ <div class="search">
+  <input id="searchInput" type="search" placeholder="Search a service category..." oninput="filterServices()">
+  <button onclick="filterServices()">Search</button>
+ </div>
+ <div class="grid" id="serviceGrid">
+  <article class="card" data-name="pan card identity">
+   <div class="symbol">🪪</div><h3>PAN & Identity</h3><p>Identity related services</p>
+  </article>
+  <article class="card" data-name="government certificates">
+   <div class="symbol">📄</div><h3>Certificates</h3><p>Certificate related services</p>
+  </article>
+  <article class="card" data-name="education scholarship">
+   <div class="symbol">🎓</div><h3>Education</h3><p>Education and scholarship services</p>
+  </article>
+  <article class="card" data-name="banking finance">
+   <div class="symbol">🏦</div><h3>Banking & Finance</h3><p>Financial service assistance</p>
+  </article>
+  <article class="card" data-name="online forms applications">
+   <div class="symbol">📝</div><h3>Online Forms</h3><p>Online form assistance</p>
+  </article>
+  <article class="card" data-name="digital services">
+   <div class="symbol">💻</div><h3>Digital Services</h3><p>Various digital services</p>
+  </article>
+  <article class="card" data-name="government schemes">
+   <div class="symbol">🏛️</div><h3>Government Schemes</h3><p>Scheme related assistance</p>
+  </article>
+  <article class="card" data-name="other services">
+   <div class="symbol">✨</div><h3>Other Services</h3><p>More services coming soon</p>
+  </article>
+ </div>
+ <p class="empty" id="noResults">No matching categories found.</p>
+ <p class="more">More service categories coming soon.</p>
+</section>
+
+<section class="info" id="about">
+ <div class="heading">
+  <h2>About Pinku Digital Point</h2>
+  <p>Your trusted digital service partner.</p>
+ </div>
+ <p style="max-width:720px;margin:auto;text-align:center;color:#66758a">
+  Pinku Digital Point aims to make digital services easier and more convenient.
+  Our goal is to provide helpful information and customer support for different
+  online service requirements.
+ </p>
+</section>
+
+<section>
+ <div class="heading">
+  <h2>How It Works</h2>
+  <p>Getting started is simple.</p>
+ </div>
+ <div class="steps">
+  <div class="step"><strong>01 · Explore</strong><p>Find the service you need.</p></div>
+  <div class="step"><strong>02 · Contact</strong><p>Share your requirements with our team.</p></div>
+  <div class="step"><strong>03 · Get Support</strong><p>Our team will guide you through the process.</p></div>
+ </div>
+</section>
+
+<section class="contact" id="contact">
+ <div class="heading">
+  <h2>Need Help?</h2>
+  <p>Contact Pinku Digital Point for service enquiries.</p>
+ </div>
+ <p>We are here to help you.</p>
+ <a class="btn primary" href="https://wa.me/91XXXXXXXXXX">Chat on WhatsApp</a>
+ <p style="font-size:11px;margin-top:12px">WhatsApp number will be updated before launch.</p>
+</section>
+</main>
+
+<footer>
+ <strong>PINKU DIGITAL POINT</strong>
+ <p>Your Digital Service Partner</p>
+ <p>© <span id="year"></span> Pinku Digital Point. All rights reserved.</p>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/91XXXXXXXXXX" aria-label="WhatsApp">◉</a>
+
+<script>
+function toggleMenu(){
+ document.getElementById('navigation').classList.toggle('show');
+}
+function filterServices(){
+ const query=document.getElementById('searchInput').value.toLowerCase().trim();
+ const cards=document.querySelectorAll('.card');
+ let visible=0;
+ cards.forEach(card=>{
+  const match=card.dataset.name.includes(query);
+  card.style.display=match?'block':'none';
+  if(match)visible++;
+ });
+ document.getElementById('noResults').style.display=visible?'none':'block';
+}
+document.getElementById('year').textContent=new Date().getFullYear();
+document.querySelectorAll('nav a').forEach(link=>{
+ link.addEventListener('click',()=>{
+  document.getElementById('navigation').classList.remove('show');
+ });
+});
+</script>
+</body>
+</html>
+
