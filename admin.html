@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | Pinku Digital Point</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:100vh}
+header{background:#102b50;color:#fff;padding:14px 5%;display:flex;align-items:center;justify-content:space-between}
+header h2{font-size:16px}
+#logout{background:#fff;color:#102b50;border:0;border-radius:7px;padding:8px 14px;font-weight:bold;font-size:14px}
+main{max-width:760px;margin:0 auto;padding:20px 5%}
+#loading,#denied{text-align:center;padding:40px;color:#738198}
+#denied{color:#c62828;display:none}
+#content{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.top h3{color:#102b50;font-size:18px}
+#count{font-size:13px;color:#738198}
+.app{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 3px 14px #0001}
+.app .head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.sname{font-weight:bold;color:#102b50}
+.badge{font-size:12px;font-weight:bold;padding:4px 10px;border-radius:20px;background:#e7f0fb;color:#1769d2;white-space:nowrap}
+.badge.s-Completed{background:#e6f6ee;color:#16a36a}
+.badge.s-Rejected{background:#fdeaea;color:#c62828}
+.badge.s-DocumentRequired{background:#fff4e0;color:#c77700}
+.meta{font-size:13px;line-height:1.8;color:#4a5b73}
+.meta b{color:#18263b}
+.upd{display:flex;gap:8px;margin-top:12px}
+.upd select{flex:1;padding:10px;border:1px solid #d5dde8;border-radius:8px;font-size:14px;background:#fff}
+.upd button{padding:10px 16px;border:0;border-radius:8px;background:#1769d2;color:#fff;font-weight:bold;font-size:14px}
+.upd button:disabled{opacity:.6}
+.note{font-size:12px;margin-top:6px}
+.ok{color:#16a36a}.err{color:#c62828}
+</style>
+</head>
+<body>
+<header>
+<h2>ADMIN · PINKU DIGITAL POINT</h2>
+<button id="logout">Logout</button>
+</header>
+<main>
+<div id="loading">Checking access...</div>
+<div id="denied">Access denied. This page is only for admin.</div>
+<div id="content">
+<div class="top"><h3>All Applications</h3><span id="count"></span></div>
+<div id="list"></div>
+</div>
+</main>
+
+<script type="module">
+import { auth, db } from "./firebase-init.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { doc, getDoc, collection, getDocs, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const STATUSES = ["Submitted","Under Review","Document Required","Processing","Completed","Rejected"];
+
+function line(parent, label, value){
+  const d = document.createElement("div");
+  const b = document.createElement("b");
+  b.textContent = label + ": ";
+  d.appendChild(b);
+  d.appendChild(document.createTextNode(value || "-"));
+  parent.appendChild(d);
+}
+
+function renderApp(a){
+  const card = document.createElement("div");
+  card.className = "app";
+
+  const head = document.createElement("div");
+  head.className = "head";
+  const sn = document.createElement("span");
+  sn.className = "sname";
+  sn.textContent = a.serviceName || "Service";
+  const badge = document.createElement("span");
+  badge.className = "badge s-" + (a.status || "Submitted").replace(/\s/g, "");
+  badge.textContent = a.status || "Submitted";
+  head.appendChild(sn);
+  head.appendChild(badge);
+  card.appendChild(head);
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  line(meta, "Customer", a.customerName);
+  line(meta, "Father", a.fatherName);
+  line(meta, "Mobile", a.mobile);
+  if (a.mobile2) line(meta, "Second mobile", a.mobile2);
+  if (a.email) line(meta, "Email", a.email);
+  line(meta, "Charge", "₹" + (a.charge != null ? a.charge : "-"));
+  line(meta, "Date", a.createdAt ? a.createdAt.toDate().toLocaleString("en-IN") : "-");
+  line(meta, "Application ID", a.id.slice(0, 8).toUpperCase());
+  card.appendChild(meta);
+
+  const upd = document.createElement("div");
+  upd.className = "upd";
+  const sel = document.createElement("select");
+  STATUSES.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s; o.textContent = s;
+    if (s === (a.status || "Submitted")) o.selected = true;
+    sel.appendChild(o);
+  });
+  const btn = document.createElement("button");
+  btn.textContent = "Update";
+  upd.appendChild(sel);
+  upd.appendChild(btn);
+  card.appendChild(upd);
+
+  const note = document.createElement("div");
+  note.className = "note";
+  card.appendChild(note);
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    note.textContent = "Updating...";
+    note.className = "note";
+    try {
+      await updateDoc(doc(db, "applications", a.id), { status: sel.value, updatedAt: serverTimestamp() });
+      badge.textContent = sel.value;
+      badge.className = "badge s-" + sel.value.replace(/\s/g, "");
+      note.textContent = "Status updated.";
+      note.className = "note ok";
+    } catch (e) {
+      console.error(e);
+      note.textContent = "Could not update. Try again.";
+      note.className = "note err";
+    }
+    btn.disabled = false;
+  });
+
+  return card;
+}
+
+async function loadAll(){
+  const list = document.getElementById("list");
+  const snap = await getDocs(collection(db, "applications"));
+  const items = [];
+  snap.forEach(s => items.push({ id: s.id, ...s.data() }));
+  items.sort((x, y) => (y.createdAt ? y.createdAt.seconds : 0) - (x.createdAt ? x.createdAt.seconds : 0));
+  document.getElementById("count").textContent = items.length + " total";
+  items.forEach(a => list.appendChild(renderApp(a)));
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "login.html"; return; }
+  let isAdmin = false;
+  try {
+    const s = await getDoc(doc(db, "admins", user.uid));
+    isAdmin = s.exists();
+  } catch (e) { isAdmin = false; }
+  document.getElementById("loading").style.display = "none";
+  if (!isAdmin) { document.getElementById("denied").style.display = "block"; return; }
+  document.getElementById("content").style.display = "block";
+  try { await loadAll(); } catch (e) { console.error(e); }
+});
+
+document.getElementById("logout").addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
+});
+</script>
+</body>
+</html>
