@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard | Pinku Digital Point</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:100vh}
+header{background:#102b50;color:#fff;padding:14px 5%;display:flex;align-items:center;justify-content:space-between}
+header h2{font-size:16px}
+#logout{background:#fff;color:#102b50;border:0;border-radius:7px;padding:8px 14px;font-weight:bold;font-size:14px}
+main{max-width:700px;margin:0 auto;padding:22px 5%}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 3px 14px #0001}
+.card h3{color:#102b50;margin-bottom:12px;font-size:17px}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eef2f7;font-size:14px;gap:10px}
+.row:last-child{border-bottom:0}
+.row span:first-child{color:#738198}
+.row span:last-child{font-weight:bold;text-align:right;word-break:break-all}
+.soon{color:#738198;font-size:14px;text-align:center;padding:14px 0}
+#loading{text-align:center;padding:40px;color:#738198}
+#content{display:none}
+.home{text-align:center;margin-top:10px;font-size:13px}
+.home a{color:#1769d2}
+</style>
+</head>
+<body>
+<header>
+<h2>PINKU DIGITAL POINT</h2>
+<button id="logout">Logout</button>
+</header>
+<main>
+<div id="loading">Loading your dashboard...</div>
+<div id="content">
+<div class="card">
+<h3>Welcome, <span id="wname"></span> 👋</h3>
+<div class="row"><span>Name</span><span id="pname"></span></div>
+<div class="row"><span>Mobile</span><span id="pmobile"></span></div>
+<div class="row"><span>Email</span><span id="pemail"></span></div>
+</div>
+<div class="card">
+<h3>My Applications</h3>
+<p class="soon">No applications yet. Service requests are coming soon.</p>
+</div>
+<div class="home"><a href="index.html">← Back to Home</a></div>
+</div>
+</main>
+
+<script type="module">
+import { auth, db } from "./firebase-init.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "login.html"; return; }
+  let name = "", mobile = "", email = user.email;
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      name = d.name || "";
+      mobile = d.mobile || "";
+      email = d.email || user.email;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  document.getElementById("wname").textContent = name || "Customer";
+  document.getElementById("pname").textContent = name || "-";
+  document.getElementById("pmobile").textContent = mobile || "-";
+  document.getElementById("pemail").textContent = email || "-";
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("content").style.display = "block";
+});
+
+document.getElementById("logout").addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
+});
+</script>
+</body>
+</html>
