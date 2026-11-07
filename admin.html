@@ -168,14 +168,14 @@ function renderApp(a){
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  line(meta, "Customer", a.customerName);
-  line(meta, "Father", a.fatherName);
-  line(meta, "Mobile", a.mobile);
+  if (a.answers) a.answers.forEach(x => line(meta, x.label, x.value)); else line(meta, "Customer", a.customerName);
+  if (!a.answers) line(meta, "Father", a.fatherName);
+  if (!a.answers) line(meta, "Mobile", a.mobile);
   if (a.mobile2) line(meta, "Second mobile", a.mobile2);
   if (a.email) line(meta, "Email", a.email);
   line(meta, "Charge", "₹" + (a.charge != null ? a.charge : "-"));
   line(meta, "Date", a.createdAt ? a.createdAt.toDate().toLocaleString("en-IN") : "-");
-  line(meta, "Application ID", a.id.slice(0, 8).toUpperCase());
+  line(meta, "Application ID", a.id);
   card.appendChild(meta);
 
   if (a.documents && a.documents.length) buildDocs(a, card);
