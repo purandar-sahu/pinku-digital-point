@@ -3,84 +3,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>New Request | Pinku Digital Point</title>
+<title>Apply | Pinku Digital Point</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:100vh;padding:20px}
-.box{background:#fff;max-width:440px;margin:0 auto;padding:24px 20px;border-radius:14px;box-shadow:0 6px 24px #0001}
+.box{background:#fff;max-width:460px;margin:0 auto;padding:24px 20px;border-radius:14px;box-shadow:0 6px 24px #0001}
 h1{font-size:21px;color:#102b50}
+h4{margin:20px 0 4px;color:#102b50;font-size:15px}
 .price{display:inline-block;background:#e6f6ee;color:#16a36a;font-weight:bold;padding:4px 12px;border-radius:20px;margin:8px 0;font-size:14px}
-h4{margin:18px 0 2px;color:#102b50;font-size:15px}
+.desc{font-size:13px;color:#4a5b73;line-height:1.6;white-space:pre-line;margin:6px 0}
 label{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
-input[type=text],input[type=tel],input[type=email]{width:100%;padding:12px;border:1px solid #d5dde8;border-radius:8px;font-size:15px}
+input[type=text],input[type=tel],input[type=email],input[type=date],input[type=number],select,textarea{width:100%;padding:12px;border:1px solid #d5dde8;border-radius:8px;font-size:15px;font-family:inherit;background:#fff}
+textarea{min-height:80px}
 input[type=file]{width:100%;padding:10px;border:1px dashed #9db3cf;border-radius:8px;font-size:14px;background:#f8fbff}
-button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:#16a36a;color:#fff;font-size:16px;font-weight:bold}
+button.main{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:#16a36a;color:#fff;font-size:16px;font-weight:bold}
 button:disabled{opacity:.6}
-#msg{margin-top:14px;font-size:14px;text-align:center}
+#msg{margin-top:14px;font-size:14px;text-align:center;line-height:1.5}
 .err{color:#c62828}.ok{color:#16a36a}
-.note{font-size:12px;color:#738198;margin-top:6px}
+.note{font-size:12px;color:#738198;margin-top:6px;line-height:1.5}
 .links{text-align:center;margin-top:16px;font-size:13px}
 .links a{color:#1769d2}
 #loading{text-align:center;padding:30px;color:#738198}
-#content{display:none}
+#content,#done{display:none}
+.pay{border:1px solid #dbe5f1;background:#f8fbff;border-radius:12px;padding:16px;text-align:center;margin-top:8px}
+#qr{display:flex;justify-content:center;margin-bottom:10px}
+.upi{font-size:13px;word-break:break-all}
+.mini{border:0;background:#1769d2;color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;margin-left:6px}
+.payapp{display:block;margin-top:12px;background:#102b50;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px}
+.trk{font-size:24px;font-weight:bold;color:#102b50;background:#e7f0fb;border-radius:10px;padding:14px;margin:14px 0;letter-spacing:1px;word-break:break-all}
+#done{text-align:center}
+#done a.main2{display:block;background:#1769d2;color:#fff;padding:13px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:14px}
 </style>
 </head>
 <body>
 <div class="box">
 <div id="loading">Loading...</div>
+
 <div id="content">
 <h1 id="sname"></h1>
 <div class="price">Service Charge: ₹<span id="scharge"></span></div>
+<div class="note" id="proc"></div>
+<p class="desc" id="sdesc"></p>
 
-<label for="cname">Customer Name</label>
-<input id="cname" type="text">
-<label for="fname">Father Name</label>
-<input id="fname" type="text">
-<label for="mobile">Mobile Number</label>
-<input id="mobile" type="tel" maxlength="10">
-<label for="mobile2">Second Mobile Number (optional)</label>
-<input id="mobile2" type="tel" maxlength="10">
-<label for="email">Email (optional)</label>
-<input id="email" type="email">
+<div id="fields"></div>
 
 <h4>Upload Documents</h4>
-<p class="note">JPG, PNG or PDF. PDF must be under 1.5 MB.</p>
+<p class="note">JPG, PNG or PDF. PDF must be under 5 MB.</p>
 <div id="files"></div>
 
-<button id="btn">Submit Request</button>
+<h4>Payment</h4>
+<div class="pay">
+<div id="qr"></div>
+<div class="upi">UPI ID: <b id="upiid"></b><button class="mini" id="copyupi" type="button">Copy</button></div>
+<a class="payapp" id="payapp" href="#">Pay with UPI app</a>
+<p class="note">₹<span id="pamt"></span> pay karo, phir neeche 12 digit UTR (transaction ID) daalo.</p>
+</div>
+<label for="utr">UTR / Transaction ID (12 digit)</label>
+<input id="utr" type="text" inputmode="numeric" maxlength="12">
+
+<button class="main" id="btn" type="button">Submit Request</button>
 <div id="msg"></div>
 <div class="links"><a href="dashboard.html">← Back to Dashboard</a></div>
+</div>
+
+<div id="done">
+<h1>Request Submitted ✅</h1>
+<p class="note">Aapka Tracking ID:</p>
+<div class="trk" id="trk"></div>
+<p class="note">Ise save kar lo. Payment verify hone ke baad hamari team kaam shuru karegi.</p>
+<a class="main2" href="dashboard.html">Go to Dashboard</a>
 </div>
 </div>
 
 <script type="module">
 import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, runTransaction, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
-const SERVICE_ID = "new-pan";
+const UPI_ID = "Mswipe.2530100826720958@mswipesbm";
+const UPI_NAME = "PINKU DIGITAL POINT";
+const SERVICE_ID = new URLSearchParams(location.search).get("service") || "new-pan";
 const CHUNK = 700000;
-const MAX_PDF = 1.5 * 1024 * 1024;
-const msg = document.getElementById("msg");
-const btn = document.getElementById("btn");
-function show(text, ok){ msg.textContent = text; msg.className = ok ? "ok" : "err"; }
+const MAX_PDF = 5 * 1024 * 1024;
+const $ = id => document.getElementById(id);
+const msg = $("msg"), btn = $("btn");
+function show(t, ok){ msg.textContent = t; msg.className = ok ? "ok" : "err"; }
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
 
-let service = null;
-let currentUser = null;
-const fileInputs = [];
+let service = null, currentUser = null;
+const fieldItems = [], docItems = [];
+
+const LEGACY = ["Customer Name","Father Name","Mobile Number | mobile","Second Mobile Number | mobile | optional","Email | email | optional"];
+const DEFAULT = ["Customer Name","Mobile Number | mobile"];
+
+function parseField(line){
+  const parts = line.split("|").map(s => s.trim());
+  const spec = (parts[1] || "").toLowerCase();
+  const f = { label: parts[0], type: "text", options: [], required: !parts.slice(1).some(p => p.toLowerCase() === "optional") };
+  if (spec.startsWith("dropdown")) {
+    f.type = "dropdown";
+    const raw = parts[1] || "";
+    f.options = raw.slice(raw.indexOf(":") + 1).split(",").map(s => s.trim()).filter(Boolean);
+  } else if (["mobile","date","number","address","email"].includes(spec)) f.type = spec;
+  return f;
+}
+function parseDoc(line){
+  const parts = line.split("|").map(s => s.trim());
+  return { template: parts[0], imageOnly: parts.slice(1).some(p => p.toLowerCase() === "image") };
+}
 
 function readDataUrl(file){
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = () => rej(new Error("read"));
-    r.readAsDataURL(file);
-  });
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error("read")); r.readAsDataURL(file); });
 }
 function loadImage(file){
   return new Promise((res, rej) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
+    const url = URL.createObjectURL(file); const img = new Image();
     img.onload = () => { URL.revokeObjectURL(url); res(img); };
     img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("img")); };
     img.src = url;
@@ -92,11 +130,9 @@ async function compressImage(file){
   let q = 0.75, out = "";
   for (let i = 0; i < 8; i++) {
     const c = document.createElement("canvas");
-    c.width = Math.round(img.width * scale);
-    c.height = Math.round(img.height * scale);
+    c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
     ctx.drawImage(img, 0, 0, c.width, c.height);
     out = c.toDataURL("image/jpeg", q);
     if (out.length <= CHUNK) break;
@@ -106,122 +142,181 @@ async function compressImage(file){
   return out.split(",")[1];
 }
 
+function docLabel(item){
+  return item.def.template.replace(/\{([^}]+)\}/g, (m, name) => {
+    const f = fieldItems.find(x => x.def.type === "dropdown" && x.def.label.toLowerCase() === name.trim().toLowerCase());
+    return f && f.input.value ? f.input.value : "…";
+  });
+}
+function updateDocLabels(){ docItems.forEach(it => { it.labelEl.textContent = docLabel(it); }); }
+
+function buildForm(){
+  const lines = (service.formFields && service.formFields.length) ? service.formFields : (SERVICE_ID === "new-pan" ? LEGACY : DEFAULT);
+  const holder = $("fields");
+  lines.map(parseField).forEach(def => {
+    const l = el("label", "", def.label + (def.required ? "" : " (optional)"));
+    let input;
+    if (def.type === "dropdown") {
+      input = el("select");
+      const p = el("option", "", "Select..."); p.value = ""; input.appendChild(p);
+      def.options.forEach(o => { const op = el("option", "", o); op.value = o; input.appendChild(op); });
+      input.addEventListener("change", updateDocLabels);
+    } else if (def.type === "address") {
+      input = el("textarea");
+    } else {
+      input = el("input");
+      input.type = def.type === "mobile" ? "tel" : def.type === "email" ? "email" : def.type === "date" ? "date" : def.type === "number" ? "number" : "text";
+      if (def.type === "mobile") input.maxLength = 10;
+    }
+    holder.appendChild(l); holder.appendChild(input);
+    fieldItems.push({ def, input });
+  });
+  const fh = $("files");
+  (service.documents || []).map(parseDoc).forEach(def => {
+    const labelEl = el("label");
+    const input = el("input");
+    input.type = "file";
+    input.accept = def.imageOnly ? "image/jpeg,image/png" : "image/*,application/pdf";
+    fh.appendChild(labelEl); fh.appendChild(input);
+    docItems.push({ def, labelEl, input });
+  });
+  updateDocLabels();
+}
+
+function buildPayment(){
+  $("upiid").textContent = UPI_ID;
+  $("pamt").textContent = service.charge;
+  const note = ("PDP " + service.name).slice(0, 40);
+  const link = "upi://pay?pa=" + UPI_ID + "&pn=" + encodeURIComponent(UPI_NAME) + "&am=" + service.charge + "&cu=INR&tn=" + encodeURIComponent(note);
+  $("payapp").href = link;
+  try { if (window.QRCode) new QRCode($("qr"), { text: link, width: 200, height: 200 }); } catch (e) { console.error(e); }
+  $("copyupi").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(UPI_ID); $("copyupi").textContent = "Copied"; } catch (e) { $("copyupi").textContent = "Copy nahi hua"; }
+  });
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "login.html"; return; }
   currentUser = user;
   try {
     const snap = await getDoc(doc(db, "services", SERVICE_ID));
-    if (!snap.exists() || snap.data().active !== true) {
-      document.getElementById("loading").textContent = "This service is not available right now.";
-      return;
-    }
+    if (!snap.exists() || snap.data().active !== true) { $("loading").textContent = "This service is not available right now."; return; }
     service = snap.data();
-    document.getElementById("sname").textContent = service.name;
-    document.getElementById("scharge").textContent = service.charge;
-    const holder = document.getElementById("files");
-    (service.documents || []).forEach((label, i) => {
-      const l = document.createElement("label");
-      l.textContent = label;
-      const inp = document.createElement("input");
-      inp.type = "file";
-      inp.accept = "image/*,application/pdf";
-      holder.appendChild(l);
-      holder.appendChild(inp);
-      fileInputs.push({ key: "d" + i, label: label, input: inp });
-    });
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("content").style.display = "block";
+    $("sname").textContent = service.name;
+    $("scharge").textContent = service.charge;
+    $("sdesc").textContent = service.description || "";
+    if (service.processing) $("proc").textContent = "Time: " + service.processing;
+    buildForm();
+    buildPayment();
+    $("loading").style.display = "none";
+    $("content").style.display = "block";
   } catch (e) {
-    document.getElementById("loading").textContent = "Could not load service. Please try again.";
+    console.error(e);
+    $("loading").textContent = "Could not load service. Please try again.";
   }
 });
 
 btn.addEventListener("click", async () => {
-  const customerName = document.getElementById("cname").value.trim();
-  const fatherName = document.getElementById("fname").value.trim();
-  const mobile = document.getElementById("mobile").value.trim();
-  const mobile2 = document.getElementById("mobile2").value.trim();
-  const email = document.getElementById("email").value.trim();
   const mobileOk = /^[6-9][0-9]{9}$/;
-
-  if (customerName.length < 2) return show("Please enter customer name.");
-  if (fatherName.length < 2) return show("Please enter father name.");
-  if (!mobileOk.test(mobile)) return show("Please enter a valid 10 digit mobile number.");
-  if (mobile2 && !mobileOk.test(mobile2)) return show("Second mobile number is not valid.");
-
-  for (const f of fileInputs) {
-    const file = f.input.files[0];
-    if (!file) return show("Please choose a file for: " + f.label);
-    const isPdf = file.type === "application/pdf";
-    const isImg = file.type.startsWith("image/");
-    if (!isPdf && !isImg) return show(f.label + ": only JPG, PNG or PDF allowed.");
-    if (isPdf && file.size > MAX_PDF) return show(f.label + ": PDF is bigger than 1.5 MB. Please use a smaller file.");
+  const answers = [];
+  let customerName = "", mobile = "";
+  for (const f of fieldItems) {
+    const v = f.input.value.trim();
+    if (f.def.required && !v) return show("Please fill: " + f.def.label);
+    if (v && f.def.type === "mobile" && !mobileOk.test(v)) return show(f.def.label + ": valid 10 digit number daalo.");
+    if (v && f.def.type === "email" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return show(f.def.label + ": valid email daalo.");
+    answers.push({ label: f.def.label, value: v });
+    if (!mobile && v && f.def.type === "mobile") mobile = v;
   }
+  const cn = answers.find(a => /customer name|applicant name|full name/i.test(a.label)) || answers.find(a => /name/i.test(a.label)) || answers[0];
+  customerName = cn ? cn.value : "";
+
+  for (const d of docItems) {
+    const file = d.input.files[0];
+    const label = docLabel(d);
+    if (!file) return show("Please choose a file for: " + label);
+    const isPdf = file.type === "application/pdf";
+    if (d.def.imageOnly) {
+      if (file.type !== "image/jpeg" && file.type !== "image/png") return show(label + ": sirf JPG ya PNG photo chalegi.");
+    } else if (!isPdf && !file.type.startsWith("image/")) return show(label + ": sirf JPG, PNG ya PDF chalega.");
+    if (isPdf && file.size > MAX_PDF) return show(label + ": PDF 5 MB se badi hai.");
+  }
+  const utr = $("utr").value.trim();
+  if (!/^[0-9]{12}$/.test(utr)) return show("UTR 12 digit ka number hona chahiye.");
 
   btn.disabled = true;
-  show("Preparing documents...", true);
+  show("Documents taiyar ho rahe hain...", true);
   const prepared = [];
   try {
-    for (const f of fileInputs) {
-      const file = f.input.files[0];
+    for (let i = 0; i < docItems.length; i++) {
+      const d = docItems[i], file = d.input.files[0];
       let base64, mime;
-      if (file.type === "application/pdf") {
-        base64 = (await readDataUrl(file)).split(",")[1];
-        mime = "application/pdf";
-      } else {
-        base64 = await compressImage(file);
-        mime = "image/jpeg";
-      }
-      prepared.push({ key: f.key, label: f.label, fileName: file.name, mime: mime, base64: base64 });
+      if (file.type === "application/pdf") { base64 = (await readDataUrl(file)).split(",")[1]; mime = "application/pdf"; }
+      else { base64 = await compressImage(file); mime = "image/jpeg"; }
+      prepared.push({ key: "d" + i, label: docLabel(d), fileName: file.name, mime, base64 });
     }
   } catch (e) {
-    show("Could not read one of the files. Please use JPG, PNG or PDF.");
-    btn.disabled = false;
-    return;
+    show("Koi file padh nahi payi. JPG, PNG ya PDF use karo.");
+    btn.disabled = false; return;
   }
 
-  let appId = null;
+  let trackingId = null;
   try {
-    show("Submitting request...", true);
-    const ref = await addDoc(collection(db, "applications"), {
-      userId: currentUser.uid,
-      serviceId: SERVICE_ID,
-      serviceName: service.name,
-      charge: service.charge,
-      customerName: customerName,
-      fatherName: fatherName,
-      mobile: mobile,
-      mobile2: mobile2,
-      email: email,
-      documents: prepared.map(p => ({ key: p.key, label: p.label, fileName: p.fileName, mimeType: p.mime })),
-      status: "Submitted",
-      createdAt: serverTimestamp()
+    show("Tracking ID ban rahi hai...", true);
+    const counterRef = doc(db, "counters", "applications");
+    const n = await runTransaction(db, async (tx) => {
+      const s = await tx.get(counterRef);
+      if (!s.exists()) { tx.set(counterRef, { next: 2 }); return 1; }
+      const cur = s.data().next;
+      tx.update(counterRef, { next: cur + 1 });
+      return cur;
     });
-    appId = ref.id;
+    trackingId = "PDP-" + new Date().getFullYear() + "-" + String(n).padStart(5, "0");
 
+    show("Request submit ho rahi hai...", true);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "applications", trackingId), {
+      userId: currentUser.uid, trackingId, serviceId: SERVICE_ID, serviceName: service.name, charge: service.charge,
+      customerName, mobile, answers,
+      documents: prepared.map(p => ({ key: p.key, label: p.label, fileName: p.fileName, mimeType: p.mime })),
+      status: "Submitted", paymentStatus: "Pending", createdAt: serverTimestamp()
+    });
+    batch.set(doc(db, "payments", trackingId), {
+      userId: currentUser.uid, applicationId: trackingId, amount: service.charge, utr, status: "Pending", createdAt: serverTimestamp()
+    });
+    batch.set(doc(db, "utrs", utr), { userId: currentUser.uid, applicationId: trackingId, createdAt: serverTimestamp() });
+    await batch.commit();
+  } catch (e) {
+    console.error(e);
+    if (trackingId) show("Ye UTR pehle use ho chuka hai ya galat hai. Sahi UTR daalo aur dobara submit karo.");
+    else show("Tracking ID nahi ban payi. Thodi der baad try karo.");
+    btn.disabled = false; return;
+  }
+
+  try {
     let all = 0;
     prepared.forEach(p => { all += Math.ceil(p.base64.length / CHUNK); });
     let done = 0;
     for (const p of prepared) {
       const total = Math.ceil(p.base64.length / CHUNK);
       for (let i = 0; i < total; i++) {
-        await setDoc(doc(db, "applications", appId, "files", p.key + "_" + i), {
-          key: p.key, label: p.label, fileName: p.fileName, mimeType: p.mime,
-          index: i, total: total,
-          data: p.base64.slice(i * CHUNK, (i + 1) * CHUNK)
+        await setDoc(doc(db, "applications", trackingId, "files", p.key + "_" + i), {
+          key: p.key, label: p.label, fileName: p.fileName, mimeType: p.mime, index: i, total, data: p.base64.slice(i * CHUNK, (i + 1) * CHUNK)
         });
         done++;
-        show("Uploading documents " + done + " of " + all + "...", true);
+        show("Documents upload ho rahe hain " + done + " / " + all + "...", true);
       }
     }
-    show("Request submitted successfully!", true);
-    setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
   } catch (e) {
     console.error(e);
-    if (appId) show("Request saved (ID " + appId.slice(0, 8).toUpperCase() + ") but documents could not be uploaded. Please contact us with this ID.");
-    else show("Could not submit. Please try again.");
-    btn.disabled = false;
+    show("Request ban gayi (ID " + trackingId + ") par documents upload nahi hue. Is ID ke saath humse sampark karo.");
+    btn.disabled = false; return;
   }
+
+  $("content").style.display = "none";
+  $("trk").textContent = trackingId;
+  $("done").style.display = "block";
+  window.scrollTo({ top: 0 });
 });
 </script>
 </body>
