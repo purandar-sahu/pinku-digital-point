@@ -32,6 +32,12 @@ main{max-width:760px;margin:0 auto;padding:20px 5%}
 .upd button:disabled{opacity:.6}
 .note{font-size:12px;margin-top:6px}
 .ok{color:#16a36a}.err{color:#c62828}
+.docs{margin-top:12px;padding-top:10px;border-top:1px solid #eef2f7;font-size:13px}
+.docs a{color:#1769d2;display:block;padding:5px 0;word-break:break-all}
+.docs .row{display:flex;gap:8px}
+.docs button{padding:8px 12px;border:0;border-radius:8px;background:#102b50;color:#fff;font-size:13px}
+.docs button.del{background:#c62828}
+.docs button:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -51,7 +57,7 @@ main{max-width:760px;margin:0 auto;padding:20px 5%}
 <script type="module">
 import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { doc, getDoc, collection, getDocs, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { doc, getDoc, collection, getDocs, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const STATUSES = ["Submitted","Under Review","Document Required","Processing","Completed","Rejected"];
 
@@ -62,6 +68,86 @@ function line(parent, label, value){
   d.appendChild(b);
   d.appendChild(document.createTextNode(value || "-"));
   parent.appendChild(d);
+}
+
+function buildDocs(a, card){
+  const box = document.createElement("div");
+  box.className = "docs";
+  const row = document.createElement("div");
+  row.className = "row";
+  const viewBtn = document.createElement("button");
+  viewBtn.textContent = "View documents (" + a.documents.length + ")";
+  const delBtn = document.createElement("button");
+  delBtn.className = "del";
+  delBtn.textContent = "Delete documents";
+  delBtn.style.display = "none";
+  row.appendChild(viewBtn);
+  row.appendChild(delBtn);
+  box.appendChild(row);
+  const out = document.createElement("div");
+  box.appendChild(out);
+  card.appendChild(box);
+
+  let fileDocs = [];
+
+  viewBtn.addEventListener("click", async () => {
+    viewBtn.disabled = true;
+    out.textContent = "Loading...";
+    try {
+      const snap = await getDocs(collection(db, "applications", a.id, "files"));
+      fileDocs = [];
+      const groups = {};
+      snap.forEach(s => {
+        fileDocs.push(s.ref);
+        const d = s.data();
+        (groups[d.key] = groups[d.key] || []).push(d);
+      });
+      out.textContent = "";
+      a.documents.forEach(m => {
+        const parts = groups[m.key];
+        const r = document.createElement("div");
+        if (!parts) {
+          r.textContent = m.label + ": not found (deleted)";
+        } else {
+          parts.sort((x, y) => x.index - y.index);
+          const bytes = parts.map(p => {
+            const bin = atob(p.data);
+            const arr = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+            return arr;
+          });
+          const blob = new Blob(bytes, { type: m.mimeType });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = m.label + " (" + m.fileName + ")";
+          r.appendChild(link);
+        }
+        out.appendChild(r);
+      });
+      if (fileDocs.length) delBtn.style.display = "inline-block";
+    } catch (e) {
+      console.error(e);
+      out.textContent = "Could not load documents.";
+    }
+    viewBtn.disabled = false;
+  });
+
+  delBtn.addEventListener("click", async () => {
+    if (!confirm("Delete all documents of this application? This cannot be undone.")) return;
+    delBtn.disabled = true;
+    try {
+      for (const ref of fileDocs) await deleteDoc(ref);
+      fileDocs = [];
+      out.textContent = "Documents deleted.";
+      delBtn.style.display = "none";
+    } catch (e) {
+      console.error(e);
+      out.textContent = "Could not delete documents.";
+    }
+    delBtn.disabled = false;
+  });
 }
 
 function renderApp(a){
@@ -91,6 +177,8 @@ function renderApp(a){
   line(meta, "Date", a.createdAt ? a.createdAt.toDate().toLocaleString("en-IN") : "-");
   line(meta, "Application ID", a.id.slice(0, 8).toUpperCase());
   card.appendChild(meta);
+
+  if (a.documents && a.documents.length) buildDocs(a, card);
 
   const upd = document.createElement("div");
   upd.className = "upd";
