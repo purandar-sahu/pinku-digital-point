@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Services | Pinku Digital Point</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:100vh}
+header{background:#102b50;color:#fff;padding:14px 5%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h2{font-size:15px}
+header a{color:#fff;font-size:13px;text-decoration:underline}
+#logout{background:#fff;color:#102b50;border:0;border-radius:7px;padding:8px 14px;font-weight:bold;font-size:14px}
+main{max-width:640px;margin:0 auto;padding:20px 5%}
+#loading,#denied{text-align:center;padding:40px;color:#738198}
+#denied{color:#c62828;display:none}
+#content{display:none}
+.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 3px 14px #0001}
+.card h3{color:#102b50;font-size:17px;margin-bottom:6px}
+label{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:11px;border:1px solid #d5dde8;border-radius:8px;font-size:15px;font-family:inherit;background:#fff}
+textarea{min-height:80px;resize:vertical}
+.chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px}
+.chk input{width:18px;height:18px}
+.btns{display:flex;gap:8px;margin-top:16px}
+.btns button{flex:1;padding:12px;border:0;border-radius:8px;font-size:15px;font-weight:bold}
+#save{background:#16a36a;color:#fff}
+#cancel{background:#e7edf5;color:#102b50;display:none}
+button:disabled{opacity:.6}
+#msg{margin-top:10px;font-size:14px;text-align:center}
+.ok{color:#16a36a}.err{color:#c62828}
+.hint{font-size:12px;color:#738198;margin-top:3px}
+.cat{margin:18px 0 8px;color:#102b50;font-size:16px}
+.svc{background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px #0001}
+.svc .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.svc .nm{font-weight:bold;color:#102b50}
+.badge{font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.on{background:#e6f6ee;color:#16a36a}
+.off{background:#fdeaea;color:#c62828}
+.svc p{font-size:13px;color:#4a5b73;margin-top:6px;line-height:1.5}
+.svc .row{display:flex;gap:8px;margin-top:10px}
+.svc .row button{flex:1;padding:9px;border:0;border-radius:8px;background:#1769d2;color:#fff;font-size:13px;font-weight:bold}
+.svc .row button.t{background:#102b50}
+</style>
+</head>
+<body>
+<header>
+<h2>MANAGE SERVICES</h2>
+<a href="admin.html">Applications</a>
+<button id="logout">Logout</button>
+</header>
+<main>
+<div id="loading">Checking access...</div>
+<div id="denied">Access denied. This page is only for admin.</div>
+<div id="content">
+<div class="card" id="formcard">
+<h3 id="formtitle">Add New Service</h3>
+<label for="name">Service Name</label>
+<input id="name" type="text">
+<label for="category">Category</label>
+<select id="category"></select>
+<label for="description">Description</label>
+<textarea id="description"></textarea>
+<label for="charge">Service Charge (₹)</label>
+<input id="charge" type="number" min="0">
+<label for="processing">Processing Time / Info (optional)</label>
+<input id="processing" type="text">
+<label for="documents">Required Documents</label>
+<textarea id="documents"></textarea>
+<div class="hint">One document per line.</div>
+<div class="chk"><input id="active" type="checkbox" checked><label for="active" style="margin:0">Active (visible to customers)</label></div>
+<div class="btns">
+<button id="cancel">Cancel Edit</button>
+<button id="save">Save Service</button>
+</div>
+<div id="msg"></div>
+</div>
+<h3 style="color:#102b50">All Services</h3>
+<div id="list"></div>
+</div>
+</main>
+
+<script type="module">
+import { auth, db } from "./firebase-init.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const CATEGORIES = ["PAN & Identity","Certificates","Education","Banking & Finance","Online Forms","Digital Services","Government Schemes","Other Services"];
+let editingId = null;
+
+const $ = id => document.getElementById(id);
+const msg = $("msg");
+function show(t, ok){ msg.textContent = t; msg.className = ok ? "ok" : "err"; }
+function slug(s){ return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+
+CATEGORIES.forEach(c => {
+  const o = document.createElement("option");
+  o.value = c; o.textContent = c;
+  $("category").appendChild(o);
+});
+
+function resetForm(){
+  editingId = null;
+  $("name").value = ""; $("name").disabled = false;
+  $("category").value = CATEGORIES[0];
+  $("description").value = ""; $("charge").value = "";
+  $("processing").value = ""; $("documents").value = "";
+  $("active").checked = true;
+  $("formtitle").textContent = "Add New Service";
+  $("save").textContent = "Save Service";
+  $("cancel").style.display = "none";
+}
+
+function fillForm(id, s){
+  editingId = id;
+  $("name").value = s.name || ""; $("name").disabled = true;
+  $("category").value = CATEGORIES.includes(s.category) ? s.category : "Other Services";
+  $("description").value = s.description || "";
+  $("charge").value = s.charge != null ? s.charge : "";
+  $("processing").value = s.processing || "";
+  $("documents").value = (s.documents || []).join("\n");
+  $("active").checked = s.active === true;
+  $("formtitle").textContent = "Edit Service";
+  $("save").textContent = "Update Service";
+  $("cancel").style.display = "block";
+  show("");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function loadList(){
+  const list = $("list");
+  list.textContent = "Loading...";
+  const snap = await getDocs(collection(db, "services"));
+  const items = [];
+  snap.forEach(s => items.push({ id: s.id, ...s.data() }));
+  list.textContent = "";
+  if (!items.length) { list.textContent = "No services yet."; return; }
+  const cats = CATEGORIES.concat(["Uncategorized"]);
+  cats.forEach(cat => {
+    const group = items.filter(i => (CATEGORIES.includes(i.category) ? i.category : "Uncategorized") === cat);
+    if (!group.length) return;
+    const h = document.createElement("h4");
+    h.className = "cat";
+    h.textContent = cat;
+    list.appendChild(h);
+    group.forEach(s => {
+      const c = document.createElement("div");
+      c.className = "svc";
+      const top = document.createElement("div");
+      top.className = "top";
+      const nm = document.createElement("span");
+      nm.className = "nm";
+      nm.textContent = (s.name || s.id) + " · ₹" + (s.charge != null ? s.charge : "-");
+      const b = document.createElement("span");
+      b.className = "badge " + (s.active ? "on" : "off");
+      b.textContent = s.active ? "Active" : "Inactive";
+      top.appendChild(nm); top.appendChild(b);
+      c.appendChild(top);
+      if (s.description) { const p = document.createElement("p"); p.textContent = s.description; c.appendChild(p); }
+      const row = document.createElement("div");
+      row.className = "row";
+      const eb = document.createElement("button");
+      eb.textContent = "Edit";
+      eb.addEventListener("click", () => fillForm(s.id, s));
+      const tb = document.createElement("button");
+      tb.className = "t";
+      tb.textContent = s.active ? "Deactivate" : "Activate";
+      tb.addEventListener("click", async () => {
+        tb.disabled = true;
+        try {
+          await updateDoc(doc(db, "services", s.id), { active: !s.active, updatedAt: serverTimestamp() });
+          await loadList();
+        } catch (e) { console.error(e); tb.disabled = false; }
+      });
+      row.appendChild(eb); row.appendChild(tb);
+      c.appendChild(row);
+      list.appendChild(c);
+    });
+  });
+}
+
+$("cancel").addEventListener("click", () => { resetForm(); show(""); });
+
+$("save").addEventListener("click", async () => {
+  const name = $("name").value.trim();
+  const description = $("description").value.trim();
+  const chargeRaw = $("charge").value.trim();
+  const charge = parseInt(chargeRaw, 10);
+  const docs = $("documents").value.split("\n").map(x => x.trim()).filter(Boolean);
+  if (!editingId && name.length < 3) return show("Please enter service name.");
+  if (description.length < 5) return show("Please enter a description.");
+  if (chargeRaw === "" || isNaN(charge) || charge < 0) return show("Please enter a valid charge.");
+  const id = editingId || slug(name);
+  if (!id) return show("Service name is not valid.");
+
+  $("save").disabled = true;
+  show("Saving...", true);
+  try {
+    const ref = doc(db, "services", id);
+    if (!editingId) {
+      const ex = await getDoc(ref);
+      if (ex.exists()) { show("This service already exists. Use Edit from the list."); $("save").disabled = false; return; }
+    }
+    const data = {
+      category: $("category").value,
+      description: description,
+      charge: charge,
+      processing: $("processing").value.trim(),
+      documents: docs,
+      active: $("active").checked,
+      updatedAt: serverTimestamp()
+    };
+    if (!editingId) { data.name = name; data.createdAt = serverTimestamp(); }
+    await setDoc(ref, data, { merge: true });
+    show(editingId ? "Service updated." : "Service added.", true);
+    resetForm();
+    await loadList();
+  } catch (e) {
+    console.error(e);
+    show("Could not save. Please try again.");
+  }
+  $("save").disabled = false;
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "login.html"; return; }
+  let isAdmin = false;
+  try { isAdmin = (await getDoc(doc(db, "admins", user.uid))).exists(); } catch (e) { isAdmin = false; }
+  $("loading").style.display = "none";
+  if (!isAdmin) { $("denied").style.display = "block"; return; }
+  $("content").style.display = "block";
+  try { await loadList(); } catch (e) { console.error(e); }
+});
+
+$("logout").addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
+});
+</script>
+</body>
+</html>
