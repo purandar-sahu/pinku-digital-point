@@ -10,16 +10,15 @@ body{font-family:Arial,sans-serif;background:#f5f8fc;color:#18263b;min-height:10
 .box{background:#fff;max-width:440px;margin:0 auto;padding:24px 20px;border-radius:14px;box-shadow:0 6px 24px #0001}
 h1{font-size:21px;color:#102b50}
 .price{display:inline-block;background:#e6f6ee;color:#16a36a;font-weight:bold;padding:4px 12px;border-radius:20px;margin:8px 0;font-size:14px}
-.docs{background:#f5f8fc;border-radius:8px;padding:12px 14px;margin:10px 0 4px;font-size:13px}
-.docs b{display:block;margin-bottom:4px;color:#102b50}
-.docs li{margin-left:18px}
+h4{margin:18px 0 2px;color:#102b50;font-size:15px}
 label{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
-input{width:100%;padding:12px;border:1px solid #d5dde8;border-radius:8px;font-size:15px}
+input[type=text],input[type=tel],input[type=email]{width:100%;padding:12px;border:1px solid #d5dde8;border-radius:8px;font-size:15px}
+input[type=file]{width:100%;padding:10px;border:1px dashed #9db3cf;border-radius:8px;font-size:14px;background:#f8fbff}
 button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:#16a36a;color:#fff;font-size:16px;font-weight:bold}
 button:disabled{opacity:.6}
 #msg{margin-top:14px;font-size:14px;text-align:center}
 .err{color:#c62828}.ok{color:#16a36a}
-.note{font-size:12px;color:#738198;margin-top:10px}
+.note{font-size:12px;color:#738198;margin-top:6px}
 .links{text-align:center;margin-top:16px;font-size:13px}
 .links a{color:#1769d2}
 #loading{text-align:center;padding:30px;color:#738198}
@@ -32,7 +31,6 @@ button:disabled{opacity:.6}
 <div id="content">
 <h1 id="sname"></h1>
 <div class="price">Service Charge: ₹<span id="scharge"></span></div>
-<div class="docs"><b>Documents required:</b><ul id="sdocs"></ul></div>
 
 <label for="cname">Customer Name</label>
 <input id="cname" type="text">
@@ -44,7 +42,11 @@ button:disabled{opacity:.6}
 <input id="mobile2" type="tel" maxlength="10">
 <label for="email">Email (optional)</label>
 <input id="email" type="email">
-<p class="note">Document upload will be added soon. Our team will contact you for the documents.</p>
+
+<h4>Upload Documents</h4>
+<p class="note">JPG, PNG or PDF. PDF must be under 1.5 MB.</p>
+<div id="files"></div>
+
 <button id="btn">Submit Request</button>
 <div id="msg"></div>
 <div class="links"><a href="dashboard.html">← Back to Dashboard</a></div>
@@ -54,15 +56,55 @@ button:disabled{opacity:.6}
 <script type="module">
 import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { doc, getDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const SERVICE_ID = "new-pan";
+const CHUNK = 700000;
+const MAX_PDF = 1.5 * 1024 * 1024;
 const msg = document.getElementById("msg");
 const btn = document.getElementById("btn");
 function show(text, ok){ msg.textContent = text; msg.className = ok ? "ok" : "err"; }
 
 let service = null;
 let currentUser = null;
+const fileInputs = [];
+
+function readDataUrl(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(new Error("read"));
+    r.readAsDataURL(file);
+  });
+}
+function loadImage(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("img")); };
+    img.src = url;
+  });
+}
+async function compressImage(file){
+  const img = await loadImage(file);
+  let scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+  let q = 0.75, out = "";
+  for (let i = 0; i < 8; i++) {
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    out = c.toDataURL("image/jpeg", q);
+    if (out.length <= CHUNK) break;
+    if (q > 0.45) q -= 0.1; else scale *= 0.8;
+  }
+  if (out.length > CHUNK * 2) throw new Error("big");
+  return out.split(",")[1];
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "login.html"; return; }
@@ -76,11 +118,16 @@ onAuthStateChanged(auth, async (user) => {
     service = snap.data();
     document.getElementById("sname").textContent = service.name;
     document.getElementById("scharge").textContent = service.charge;
-    const ul = document.getElementById("sdocs");
-    (service.documents || []).forEach(d => {
-      const li = document.createElement("li");
-      li.textContent = d;
-      ul.appendChild(li);
+    const holder = document.getElementById("files");
+    (service.documents || []).forEach((label, i) => {
+      const l = document.createElement("label");
+      l.textContent = label;
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = "image/*,application/pdf";
+      holder.appendChild(l);
+      holder.appendChild(inp);
+      fileInputs.push({ key: "d" + i, label: label, input: inp });
     });
     document.getElementById("loading").style.display = "none";
     document.getElementById("content").style.display = "block";
@@ -102,10 +149,41 @@ btn.addEventListener("click", async () => {
   if (!mobileOk.test(mobile)) return show("Please enter a valid 10 digit mobile number.");
   if (mobile2 && !mobileOk.test(mobile2)) return show("Second mobile number is not valid.");
 
+  for (const f of fileInputs) {
+    const file = f.input.files[0];
+    if (!file) return show("Please choose a file for: " + f.label);
+    const isPdf = file.type === "application/pdf";
+    const isImg = file.type.startsWith("image/");
+    if (!isPdf && !isImg) return show(f.label + ": only JPG, PNG or PDF allowed.");
+    if (isPdf && file.size > MAX_PDF) return show(f.label + ": PDF is bigger than 1.5 MB. Please use a smaller file.");
+  }
+
   btn.disabled = true;
-  show("Submitting...", true);
+  show("Preparing documents...", true);
+  const prepared = [];
   try {
-    await addDoc(collection(db, "applications"), {
+    for (const f of fileInputs) {
+      const file = f.input.files[0];
+      let base64, mime;
+      if (file.type === "application/pdf") {
+        base64 = (await readDataUrl(file)).split(",")[1];
+        mime = "application/pdf";
+      } else {
+        base64 = await compressImage(file);
+        mime = "image/jpeg";
+      }
+      prepared.push({ key: f.key, label: f.label, fileName: file.name, mime: mime, base64: base64 });
+    }
+  } catch (e) {
+    show("Could not read one of the files. Please use JPG, PNG or PDF.");
+    btn.disabled = false;
+    return;
+  }
+
+  let appId = null;
+  try {
+    show("Submitting request...", true);
+    const ref = await addDoc(collection(db, "applications"), {
       userId: currentUser.uid,
       serviceId: SERVICE_ID,
       serviceName: service.name,
@@ -115,14 +193,33 @@ btn.addEventListener("click", async () => {
       mobile: mobile,
       mobile2: mobile2,
       email: email,
+      documents: prepared.map(p => ({ key: p.key, label: p.label, fileName: p.fileName, mimeType: p.mime })),
       status: "Submitted",
       createdAt: serverTimestamp()
     });
+    appId = ref.id;
+
+    let all = 0;
+    prepared.forEach(p => { all += Math.ceil(p.base64.length / CHUNK); });
+    let done = 0;
+    for (const p of prepared) {
+      const total = Math.ceil(p.base64.length / CHUNK);
+      for (let i = 0; i < total; i++) {
+        await setDoc(doc(db, "applications", appId, "files", p.key + "_" + i), {
+          key: p.key, label: p.label, fileName: p.fileName, mimeType: p.mime,
+          index: i, total: total,
+          data: p.base64.slice(i * CHUNK, (i + 1) * CHUNK)
+        });
+        done++;
+        show("Uploading documents " + done + " of " + all + "...", true);
+      }
+    }
     show("Request submitted successfully!", true);
     setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
   } catch (e) {
     console.error(e);
-    show("Could not submit. Please try again.");
+    if (appId) show("Request saved (ID " + appId.slice(0, 8).toUpperCase() + ") but documents could not be uploaded. Please contact us with this ID.");
+    else show("Could not submit. Please try again.");
     btn.disabled = false;
   }
 });
