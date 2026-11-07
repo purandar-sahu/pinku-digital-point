@@ -107,7 +107,7 @@ async function loadApps(uid){
       addLine(meta, "Applicant: " + (a.customerName || "-"));
       addLine(meta, "Charge: ₹" + (a.charge != null ? a.charge : "-"));
       if (a.createdAt) addLine(meta, "Date: " + a.createdAt.toDate().toLocaleDateString("en-IN"));
-      addLine(meta, "Application ID: " + a.id.slice(0, 8).toUpperCase());
+      addLine(meta, "Application ID: " + a.id);
       card.appendChild(meta);
       box.appendChild(card);
     });
