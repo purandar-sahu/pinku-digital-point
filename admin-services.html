@@ -17,10 +17,20 @@ main{max-width:640px;margin:0 auto;padding:20px 5%}
 #content{display:none}
 .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 3px 14px #0001}
 .card h3{color:#102b50;font-size:17px;margin-bottom:6px}
-label{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
+label.l{display:block;font-size:13px;font-weight:bold;margin:12px 0 4px}
 input[type=text],input[type=number],select,textarea{width:100%;padding:11px;border:1px solid #d5dde8;border-radius:8px;font-size:15px;font-family:inherit;background:#fff}
-textarea{min-height:80px;resize:vertical}
-.chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px}
+textarea{min-height:90px;resize:vertical}
+.sec{margin-top:18px;padding-top:12px;border-top:2px solid #eef2f7}
+.sec h4{color:#102b50;font-size:15px}
+.hint{font-size:12px;color:#738198;margin-top:3px;line-height:1.5}
+.qrow{border:1px solid #dbe5f1;background:#f8fbff;border-radius:10px;padding:10px;margin-top:10px;display:grid;gap:8px}
+.qrow .top{display:flex;gap:8px;align-items:center}
+.qrow .top input{flex:1}
+.rm{background:#fdeaea;color:#c62828;border:0;border-radius:8px;width:38px;height:38px;font-size:18px;font-weight:bold}
+.opt{display:flex;align-items:center;gap:8px;font-size:13px}
+.opt input{width:18px;height:18px}
+.add{width:100%;margin-top:10px;padding:11px;border:2px dashed #1769d2;background:#fff;color:#1769d2;border-radius:10px;font-size:14px;font-weight:bold}
+.chk{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:14px}
 .chk input{width:18px;height:18px}
 .btns{display:flex;gap:8px;margin-top:16px}
 .btns button{flex:1;padding:12px;border:0;border-radius:8px;font-size:15px;font-weight:bold}
@@ -29,18 +39,18 @@ textarea{min-height:80px;resize:vertical}
 button:disabled{opacity:.6}
 #msg{margin-top:10px;font-size:14px;text-align:center}
 .ok{color:#16a36a}.err{color:#c62828}
-.hint{font-size:12px;color:#738198;margin-top:3px}
 .cat{margin:18px 0 8px;color:#102b50;font-size:16px}
 .svc{background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px #0001}
-.svc .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.svc .top2{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .svc .nm{font-weight:bold;color:#102b50}
 .badge{font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;white-space:nowrap}
 .on{background:#e6f6ee;color:#16a36a}
 .off{background:#fdeaea;color:#c62828}
-.svc p{font-size:13px;color:#4a5b73;margin-top:6px;line-height:1.5}
+.svc p{font-size:13px;color:#4a5b73;margin-top:6px;line-height:1.5;white-space:pre-line}
 .svc .row{display:flex;gap:8px;margin-top:10px}
 .svc .row button{flex:1;padding:9px;border:0;border-radius:8px;background:#1769d2;color:#fff;font-size:13px;font-weight:bold}
 .svc .row button.t{background:#102b50}
+.svc .row button.c{background:#6b7c93}
 </style>
 </head>
 <body>
@@ -53,28 +63,41 @@ button:disabled{opacity:.6}
 <div id="loading">Checking access...</div>
 <div id="denied">Access denied. This page is only for admin.</div>
 <div id="content">
-<div class="card" id="formcard">
+<div class="card">
 <h3 id="formtitle">Add New Service</h3>
-<label for="name">Service Name</label>
+<label class="l" for="name">Service Name</label>
 <input id="name" type="text">
-<label for="category">Category</label>
+<label class="l" for="category">Category</label>
 <select id="category"></select>
-<label for="description">Description</label>
-<textarea id="description"></textarea>
-<label for="charge">Service Charge (₹)</label>
+<label class="l" for="charge">Service Charge (₹)</label>
 <input id="charge" type="number" min="0">
-<label for="processing">Processing Time / Info (optional)</label>
-<input id="processing" type="text">
-<label for="documents">Required Documents</label>
-<textarea id="documents"></textarea>
-<div class="hint">One document per line.</div>
-<div class="chk"><input id="active" type="checkbox" checked><label for="active" style="margin:0">Active (visible to customers)</label></div>
+<label class="l" for="processing">Processing Time (optional)</label>
+<input id="processing" type="text" placeholder="Jaise: 3-7 days">
+<label class="l" for="description">Description</label>
+<textarea id="description" placeholder="Customer ko form ke upar dikhega (time, instructions)"></textarea>
+
+<div class="sec">
+<h4>Customer ko kya bharna hai (Sawaal)</h4>
+<div class="hint">Customer ko form me ye sawaal dikhenge.</div>
+<div id="questions"></div>
+<button class="add" id="addq" type="button">+ Sawaal jodo</button>
+</div>
+
+<div class="sec">
+<h4>Customer se kaunse Documents chahiye</h4>
+<div class="hint">Agar document kisi dropdown ke jawab par depend karta hai, to "Customer ka jawab jodo" me wo dropdown chuno. Jaise Relation = Father chuna to customer ko "Aadhaar Card: Father" dikhega.</div>
+<div id="docs"></div>
+<button class="add" id="addd" type="button">+ Document jodo</button>
+</div>
+
+<div class="chk"><input id="active" type="checkbox" checked><label for="active" style="margin:0">Active (customer ko dikhegi)</label></div>
 <div class="btns">
-<button id="cancel">Cancel Edit</button>
-<button id="save">Save Service</button>
+<button id="cancel" type="button">Cancel</button>
+<button id="save" type="button">Save Service</button>
 </div>
 <div id="msg"></div>
 </div>
+
 <h3 style="color:#102b50">All Services</h3>
 <div id="list"></div>
 </div>
@@ -85,43 +108,141 @@ import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
-const CATEGORIES = ["PAN & Identity","Certificates","Education","Banking & Finance","Online Forms","Digital Services","Government Schemes","Other Services"];
+const CATEGORIES = ["PAN & Identity","Aadhaar Services","Voter ID Services","Certificates","Education","Banking & Finance","Vehicle & RC","Online Forms","Government Schemes","Digital Services","Other Services"];
+const TYPES = [["text","Text (naam, kuch bhi)"],["mobile","Mobile Number"],["date","Date"],["number","Number"],["address","Address (lamba)"],["email","Email"],["dropdown","Dropdown (options me se chunna)"]];
 let editingId = null;
 
 const $ = id => document.getElementById(id);
 const msg = $("msg");
+const qBox = $("questions"), dBox = $("docs");
 function show(t, ok){ msg.textContent = t; msg.className = ok ? "ok" : "err"; }
 function slug(s){ return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
 
-CATEGORIES.forEach(c => {
-  const o = document.createElement("option");
-  o.value = c; o.textContent = c;
-  $("category").appendChild(o);
-});
+CATEGORIES.forEach(c => { const o = el("option"); o.value = c; o.textContent = c; $("category").appendChild(o); });
+
+function parseField(line){
+  const parts = line.split("|").map(s => s.trim());
+  const spec = (parts[1] || "").toLowerCase();
+  const q = { label: parts[0], type: "text", options: "", required: !parts.slice(1).some(p => p.toLowerCase() === "optional") };
+  if (spec.startsWith("dropdown")) {
+    q.type = "dropdown";
+    const raw = parts[1] || "";
+    q.options = raw.slice(raw.indexOf(":") + 1).split(",").map(s => s.trim()).filter(Boolean).join(", ");
+  } else if (["mobile","date","number","address","email"].includes(spec)) q.type = spec;
+  return q;
+}
+function parseDoc(line){
+  const parts = line.split("|").map(s => s.trim());
+  const image = parts.slice(1).some(p => p.toLowerCase() === "image");
+  let label = parts[0], link = "";
+  const m = label.match(/\{([^}]+)\}/);
+  if (m) { link = m[1].trim(); label = label.replace(m[0], "").replace(/^\s*:\s*|\s*:\s*$/g, "").trim(); }
+  return { label, link, image };
+}
+
+function getQuestions(){
+  return Array.from(qBox.children).map(r => ({
+    label: r.querySelector(".ql").value.trim(),
+    type: r.querySelector(".qt").value,
+    options: r.querySelector(".qo").value,
+    required: r.querySelector(".qr").checked
+  }));
+}
+
+function refreshLinks(){
+  const labels = getQuestions().filter(q => q.type === "dropdown" && q.label).map(q => q.label);
+  Array.from(dBox.children).forEach(r => {
+    const sel = r.querySelector(".dk");
+    const want = (sel.dataset.want || sel.value || "").toLowerCase();
+    sel.textContent = "";
+    const none = el("option", "", "Kuch nahi (fixed document)");
+    none.value = "";
+    sel.appendChild(none);
+    labels.forEach(l => { const o = el("option", "", "Jawab jodo: " + l); o.value = l; sel.appendChild(o); });
+    const found = labels.find(l => l.toLowerCase() === want);
+    sel.value = found || "";
+    sel.dataset.want = found || "";
+  });
+}
+
+function addQuestion(q){
+  q = q || { label: "", type: "text", options: "", required: true };
+  const row = el("div", "qrow");
+  const top = el("div", "top");
+  const ql = el("input", "ql"); ql.type = "text"; ql.placeholder = "Sawaal likho (jaise Customer Name)"; ql.value = q.label;
+  const rm = el("button", "rm", "✕"); rm.type = "button";
+  top.appendChild(ql); top.appendChild(rm);
+  const qt = el("select", "qt");
+  TYPES.forEach(t => { const o = el("option", "", t[1]); o.value = t[0]; qt.appendChild(o); });
+  qt.value = q.type;
+  const qo = el("input", "qo"); qo.type = "text"; qo.placeholder = "Options comma se alag likho: Father, Mother"; qo.value = q.options;
+  qo.style.display = q.type === "dropdown" ? "block" : "none";
+  const opt = el("label", "opt");
+  const qr = el("input", "qr"); qr.type = "checkbox"; qr.checked = q.required;
+  opt.appendChild(qr); opt.appendChild(document.createTextNode("Zaruri hai (customer ko bharna hi hoga)"));
+  row.appendChild(top); row.appendChild(qt); row.appendChild(qo); row.appendChild(opt);
+  ql.addEventListener("input", refreshLinks);
+  qt.addEventListener("change", () => { qo.style.display = qt.value === "dropdown" ? "block" : "none"; refreshLinks(); });
+  rm.addEventListener("click", () => { row.remove(); refreshLinks(); });
+  qBox.appendChild(row);
+  refreshLinks();
+}
+
+function addDocument(d){
+  d = d || { label: "", link: "", image: false };
+  const row = el("div", "qrow");
+  const top = el("div", "top");
+  const dl = el("input", "dl"); dl.type = "text"; dl.placeholder = "Document ka naam (jaise Aadhaar Card)"; dl.value = d.label;
+  const rm = el("button", "rm", "✕"); rm.type = "button";
+  top.appendChild(dl); top.appendChild(rm);
+  const dk = el("select", "dk");
+  dk.dataset.want = d.link || "";
+  const opt = el("label", "opt");
+  const di = el("input", "di"); di.type = "checkbox"; di.checked = d.image;
+  opt.appendChild(di); opt.appendChild(document.createTextNode("Sirf photo (JPG/PNG), PDF nahi"));
+  row.appendChild(top); row.appendChild(dk); row.appendChild(opt);
+  rm.addEventListener("click", () => row.remove());
+  dBox.appendChild(row);
+  refreshLinks();
+}
+
+$("addq").addEventListener("click", () => addQuestion());
+$("addd").addEventListener("click", () => addDocument());
 
 function resetForm(){
   editingId = null;
   $("name").value = ""; $("name").disabled = false;
   $("category").value = CATEGORIES[0];
-  $("description").value = ""; $("charge").value = "";
-  $("processing").value = ""; $("documents").value = "";
+  $("description").value = ""; $("charge").value = ""; $("processing").value = "";
+  qBox.textContent = ""; dBox.textContent = "";
+  addQuestion({ label: "Customer Name", type: "text", options: "", required: true });
+  addQuestion({ label: "Mobile Number", type: "mobile", options: "", required: true });
   $("active").checked = true;
   $("formtitle").textContent = "Add New Service";
   $("save").textContent = "Save Service";
   $("cancel").style.display = "none";
 }
 
-function fillForm(id, s){
-  editingId = id;
-  $("name").value = s.name || ""; $("name").disabled = true;
+function fillForm(id, s, copy){
+  resetForm();
+  qBox.textContent = ""; dBox.textContent = "";
+  editingId = copy ? null : id;
+  $("name").value = copy ? "" : (s.name || ""); $("name").disabled = !copy;
   $("category").value = CATEGORIES.includes(s.category) ? s.category : "Other Services";
   $("description").value = s.description || "";
   $("charge").value = s.charge != null ? s.charge : "";
   $("processing").value = s.processing || "";
-  $("documents").value = (s.documents || []).join("\n");
-  $("active").checked = s.active === true;
-  $("formtitle").textContent = "Edit Service";
-  $("save").textContent = "Update Service";
+  (s.formFields || []).forEach(l => addQuestion(parseField(l)));
+  if (!(s.formFields || []).length) {
+    addQuestion({ label: "Customer Name", type: "text", options: "", required: true });
+    addQuestion({ label: "Mobile Number", type: "mobile", options: "", required: true });
+  }
+  (s.documents || []).forEach(l => addDocument(parseDoc(l)));
+  refreshLinks();
+  $("active").checked = copy ? true : s.active === true;
+  $("formtitle").textContent = copy ? "Nayi Service (copy se)" : "Edit Service";
+  $("save").textContent = copy ? "Save Service" : "Update Service";
   $("cancel").style.display = "block";
   show("");
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -135,44 +256,27 @@ async function loadList(){
   snap.forEach(s => items.push({ id: s.id, ...s.data() }));
   list.textContent = "";
   if (!items.length) { list.textContent = "No services yet."; return; }
-  const cats = CATEGORIES.concat(["Uncategorized"]);
-  cats.forEach(cat => {
+  CATEGORIES.concat(["Uncategorized"]).forEach(cat => {
     const group = items.filter(i => (CATEGORIES.includes(i.category) ? i.category : "Uncategorized") === cat);
     if (!group.length) return;
-    const h = document.createElement("h4");
-    h.className = "cat";
-    h.textContent = cat;
-    list.appendChild(h);
+    list.appendChild(el("h4", "cat", cat));
     group.forEach(s => {
-      const c = document.createElement("div");
-      c.className = "svc";
-      const top = document.createElement("div");
-      top.className = "top";
-      const nm = document.createElement("span");
-      nm.className = "nm";
-      nm.textContent = (s.name || s.id) + " · ₹" + (s.charge != null ? s.charge : "-");
-      const b = document.createElement("span");
-      b.className = "badge " + (s.active ? "on" : "off");
-      b.textContent = s.active ? "Active" : "Inactive";
-      top.appendChild(nm); top.appendChild(b);
+      const c = el("div", "svc");
+      const top = el("div", "top2");
+      top.appendChild(el("span", "nm", (s.name || s.id) + " · ₹" + (s.charge != null ? s.charge : "-")));
+      top.appendChild(el("span", "badge " + (s.active ? "on" : "off"), s.active ? "Active" : "Inactive"));
       c.appendChild(top);
-      if (s.description) { const p = document.createElement("p"); p.textContent = s.description; c.appendChild(p); }
-      const row = document.createElement("div");
-      row.className = "row";
-      const eb = document.createElement("button");
-      eb.textContent = "Edit";
-      eb.addEventListener("click", () => fillForm(s.id, s));
-      const tb = document.createElement("button");
-      tb.className = "t";
-      tb.textContent = s.active ? "Deactivate" : "Activate";
+      if (s.description) c.appendChild(el("p", "", s.description));
+      const row = el("div", "row");
+      const eb = el("button", "", "Edit"); eb.addEventListener("click", () => fillForm(s.id, s, false));
+      const cb = el("button", "c", "Copy"); cb.addEventListener("click", () => fillForm(s.id, s, true));
+      const tb = el("button", "t", s.active ? "Deactivate" : "Activate");
       tb.addEventListener("click", async () => {
         tb.disabled = true;
-        try {
-          await updateDoc(doc(db, "services", s.id), { active: !s.active, updatedAt: serverTimestamp() });
-          await loadList();
-        } catch (e) { console.error(e); tb.disabled = false; }
+        try { await updateDoc(doc(db, "services", s.id), { active: !s.active, updatedAt: serverTimestamp() }); await loadList(); }
+        catch (e) { console.error(e); tb.disabled = false; }
       });
-      row.appendChild(eb); row.appendChild(tb);
+      row.appendChild(eb); row.appendChild(cb); row.appendChild(tb);
       c.appendChild(row);
       list.appendChild(c);
     });
@@ -186,38 +290,68 @@ $("save").addEventListener("click", async () => {
   const description = $("description").value.trim();
   const chargeRaw = $("charge").value.trim();
   const charge = parseInt(chargeRaw, 10);
-  const docs = $("documents").value.split("\n").map(x => x.trim()).filter(Boolean);
-  if (!editingId && name.length < 3) return show("Please enter service name.");
-  if (description.length < 5) return show("Please enter a description.");
-  if (chargeRaw === "" || isNaN(charge) || charge < 0) return show("Please enter a valid charge.");
-  const id = editingId || slug(name);
-  if (!id) return show("Service name is not valid.");
+  if (!editingId && name.length < 3) return show("Service ka naam likho.");
+  if (chargeRaw === "" || isNaN(charge) || charge < 0) return show("Charge sahi number me likho.");
+  if (description.length < 5) return show("Description likho.");
 
+  const qs = getQuestions();
+  const labels = [];
+  const fieldLines = [];
+  for (let i = 0; i < qs.length; i++) {
+    const q = qs[i];
+    if (!q.label) return show("Sawaal " + (i + 1) + " ka naam khali hai. Likho ya ✕ se hata do.");
+    if (labels.includes(q.label.toLowerCase())) return show("'" + q.label + "' do baar likha hai.");
+    labels.push(q.label.toLowerCase());
+    const parts = [q.label];
+    if (q.type === "dropdown") {
+      const opts = q.options.split(",").map(s => s.trim()).filter(Boolean);
+      if (opts.length < 2) return show("'" + q.label + "' me kam se kam 2 option likho (comma se alag).");
+      parts.push("dropdown: " + opts.join(", "));
+    } else if (q.type !== "text") parts.push(q.type);
+    if (!q.required) parts.push("optional");
+    fieldLines.push(parts.join(" | "));
+  }
+
+  const docLines = [];
+  const rows = Array.from(dBox.children);
+  for (let i = 0; i < rows.length; i++) {
+    const label = rows[i].querySelector(".dl").value.trim();
+    const link = rows[i].querySelector(".dk").value;
+    const image = rows[i].querySelector(".di").checked;
+    if (!label) return show("Document " + (i + 1) + " ka naam khali hai. Likho ya ✕ se hata do.");
+    let line = label;
+    if (link) line += ": {" + link + "}";
+    if (image) line += " | image";
+    docLines.push(line);
+  }
+
+  const id = editingId || slug(name);
+  if (!id) return show("Service ka naam sahi nahi hai.");
   $("save").disabled = true;
   show("Saving...", true);
   try {
     const ref = doc(db, "services", id);
     if (!editingId) {
-      const ex = await getDoc(ref);
-      if (ex.exists()) { show("This service already exists. Use Edit from the list."); $("save").disabled = false; return; }
+      if ((await getDoc(ref)).exists()) { show("Is naam ki service pehle se hai. List me Edit dabao."); $("save").disabled = false; return; }
     }
     const data = {
       category: $("category").value,
       description: description,
       charge: charge,
       processing: $("processing").value.trim(),
-      documents: docs,
+      formFields: fieldLines,
+      documents: docLines,
       active: $("active").checked,
       updatedAt: serverTimestamp()
     };
     if (!editingId) { data.name = name; data.createdAt = serverTimestamp(); }
     await setDoc(ref, data, { merge: true });
-    show(editingId ? "Service updated." : "Service added.", true);
+    show(editingId ? "Service update ho gayi." : "Service add ho gayi.", true);
     resetForm();
     await loadList();
   } catch (e) {
     console.error(e);
-    show("Could not save. Please try again.");
+    show("Save nahi hui. Dobara try karo.");
   }
   $("save").disabled = false;
 });
@@ -229,11 +363,17 @@ onAuthStateChanged(auth, async (user) => {
   $("loading").style.display = "none";
   if (!isAdmin) { $("denied").style.display = "block"; return; }
   $("content").style.display = "block";
+  resetForm();
   try { await loadList(); } catch (e) { console.error(e); }
 });
 
 $("logout").addEventListener("click", async () => {
   await signOut(auth);
+  window.location.href = "login.html";
+});
+</script>
+</body>
+</html>(auth);
   window.location.href = "login.html";
 });
 </script>
